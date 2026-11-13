@@ -68,7 +68,16 @@ func newFakeServer(t *testing.T) (*fakeServer, *httptest.Server) {
 				_ = json.NewEncoder(w).Encode(body)
 				return
 			}
-			_ = json.NewEncoder(w).Encode(f.state[s.GetPath])
+			body := f.state[s.GetPath]
+			// banners answers GET with a bare list while accepting {"banners": [...]} on
+			// POST — the one measured asymmetry the adapter exists for.
+			if s.Name == "banners" {
+				if m, ok := body.(map[string]any); ok {
+					_ = json.NewEncoder(w).Encode(m["banners"])
+					return
+				}
+			}
+			_ = json.NewEncoder(w).Encode(body)
 		})
 	}
 	srv := httptest.NewServer(mux)
@@ -121,7 +130,9 @@ func (f *fakeServer) seed() {
 		"TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE": "c", "ENABLE_VOICE_MODE_PROMPT": false,
 		"VOICE_MODE_PROMPT_TEMPLATE": nil}
 	f.state["/api/v1/chats/config"] = map[string]any{
-		"ENABLE_CONTEXT_COMPACTION": true, "CONTEXT_COMPACTION_PROMPT_TEMPLATE": "c"}
+		"ENABLE_CONTEXT_COMPACTION": true, "CONTEXT_COMPACTION_PROMPT_TEMPLATE": "c",
+		// a field 0.13.3 added: the open body must not reject it
+		"DEFAULT_TOOL_PERMISSIONS_AUTO_PROMPT": true}
 	f.state["/api/v1/evaluations/config"] = map[string]any{}
 	f.state["/api/v1/users/default/permissions"] = map[string]any{
 		"workspace": map[string]any{"models": true}, "sharing": map[string]any{},

@@ -80,7 +80,7 @@
 	code_execution?:   #CodeExecution
 	subagents?:        #Subagents
 	tasks?:            #Tasks
-	chat?:             #Chat
+	chat?:             #VersionCoupled
 	evaluations?:      #Evaluations
 	user_permissions?: #UserPermissions
 	banners?:          #Banners
@@ -168,13 +168,17 @@
 })
 
 // POST /api/v1/configs/subagents
+//
+// The four limits are NULLABLE in 0.13.3: a fresh deployment answers them as null (measured
+// against a disposable 0.13.3 server), so requiring a concrete int would reject the server's
+// own body — the exact mismatch the live schema test exists to catch.
 #Subagents: close({
 	ENABLE_SUBAGENTS!:            bool
 	SUBAGENTS_BACKGROUND_ENABLED!: bool
-	SUBAGENTS_MAX_CONCURRENT!:    int
-	SUBAGENTS_MAX_ASYNC!:         int
-	SUBAGENTS_MAX_ITERATIONS!:    int
-	SUBAGENTS_MAX_OUTPUT!:        int
+	SUBAGENTS_MAX_CONCURRENT!:    int | null
+	SUBAGENTS_MAX_ASYNC!:         int | null
+	SUBAGENTS_MAX_ITERATIONS!:    int | null
+	SUBAGENTS_MAX_OUTPUT!:        int | null
 	SUBAGENTS_SYSTEM_PROMPT!:     string
 })
 
@@ -199,21 +203,6 @@
 	TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE!:  string
 	ENABLE_VOICE_MODE_PROMPT!:                bool
 	VOICE_MODE_PROMPT_TEMPLATE!:              string | null
-})
-
-// POST /api/v1/chats/config
-#Chat: close({
-	CONTEXT_COMPACTION_MODEL?:              string | null
-	ENABLE_CONTEXT_COMPACTION!:             bool
-	CONTEXT_COMPACTION_TOKEN_THRESHOLD?:    int | null
-	CONTEXT_COMPACTION_TOKEN_CAP?:          int | null
-	CONTEXT_COMPACTION_RETENTION_PERCENTAGE?: int | null
-	CONTEXT_COMPACTION_PROMPT_TEMPLATE!:    string
-	ENABLE_TOOL_PERMISSIONS?:               bool
-	ENABLE_TOOL_SEARCH?:                    bool
-	TOOL_SEARCH_DEFER_THRESHOLD?:           int
-	TOOL_SEARCH_ALWAYS_LOADED?:             [...string]
-	TOOL_SEARCH_DEFER_BUILTIN_TOOLS?:       bool
 })
 
 // POST /api/v1/evaluations/config

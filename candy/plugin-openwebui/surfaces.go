@@ -32,6 +32,28 @@ type Surface struct {
 	GetPath string
 	// PostPath is the POST route that applies the surface.
 	PostPath string
+	// NormalizeGet adapts a GET body into the POST body shape. Most surfaces
+	// answer GET with exactly what they accept on POST; `banners` is the measured
+	// exception (GET returns a bare list, POST takes {"banners": [...]}), and the
+	// difference is the server's, not ours to wish away.
+	NormalizeGet func(any) any
+}
+
+// normalize applies the surface's GET->POST adapter (identity when there is none).
+func (s Surface) normalize(v any) any {
+	if s.NormalizeGet == nil {
+		return v
+	}
+	return s.NormalizeGet(v)
+}
+
+// wrapBanners adapts GET /api/v1/configs/banners (a bare list) to the
+// SetBannersForm body POST /api/v1/configs/banners accepts.
+func wrapBanners(v any) any {
+	if m, ok := v.(map[string]any); ok {
+		return m
+	}
+	return map[string]any{"banners": v}
 }
 
 // Surfaces is the managed set, in a stable order (save writes them in this order and
@@ -49,7 +71,7 @@ var Surfaces = []Surface{
 	{Name: "chat", GetPath: "/api/v1/chats/config", PostPath: "/api/v1/chats/config"},
 	{Name: "evaluations", GetPath: "/api/v1/evaluations/config", PostPath: "/api/v1/evaluations/config"},
 	{Name: "user_permissions", GetPath: "/api/v1/users/default/permissions", PostPath: "/api/v1/users/default/permissions"},
-	{Name: "banners", GetPath: "/api/v1/configs/banners", PostPath: "/api/v1/configs/banners"},
+	{Name: "banners", GetPath: "/api/v1/configs/banners", PostPath: "/api/v1/configs/banners", NormalizeGet: wrapBanners},
 	{Name: "suggestions", GetPath: "", PostPath: "/api/v1/configs/suggestions"},
 	{Name: "interface", GetPath: "", PostPath: "/api/v1/configs/interface/visibility"},
 	{Name: "audio", GetPath: "/api/v1/audio/config", PostPath: "/api/v1/audio/config/update"},
@@ -156,22 +178,6 @@ func redactValue(v any) any {
 	}
 }
 
-// isSet reports whether a value carries content worth redacting.
-func isSet(v any) bool {
-	switch t := v.(type) {
-	case nil:
-		return false
-	case string:
-		return t != ""
-	case []any:
-		return len(t) > 0
-	case map[string]any:
-		return len(t) > 0
-	default:
-		return true
-	}
-}
-
 // SecretNotFoundError names a credential key the apply could not resolve. It is a
 // distinct type so the CLI can report every missing key at once instead of stopping at
 // the first.
@@ -243,7 +249,9 @@ func resolveAt(desired, live any, lookup func(string) (string, error), allowLite
 		}
 		return out, nil
 	case string:
-		if isSecretField(lastSeg(path)) && !allowLiteral {
+		// An EMPTY credential is not a secret: a server that has no key configured
+		// answers "", and round-tripping that must not demand an escape hatch.
+		if t != "" && isSecretField(lastSeg(path)) && !allowLiteral {
 			return nil, fmt.Errorf("%s: refusing a literal credential value in the entity (use {secret: <key>} or --allow-literal-secrets)", path)
 		}
 		return t, nil
@@ -277,16 +285,6 @@ func joinPath(p, k string) string {
 		return k
 	}
 	return p + "." + k
-}
-
-// MarshalCanonical renders a decoded JSON value deterministically (encoding/json sorts
-// object keys), which is what makes round-trip comparison and diff output stable.
-func MarshalCanonical(v any) (string, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
 }
 
 // DiffPaths lists the dotted paths at which two decoded JSON values differ, bounded so a

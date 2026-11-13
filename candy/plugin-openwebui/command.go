@@ -2,7 +2,9 @@ package openwebui
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"sort"
 	"strings"
@@ -95,7 +97,8 @@ func runCLI(args []string) error {
 func (c *CLI) loadEntity() (*Entity, error) {
 	ent, err := LoadEntity(c.File, c.Node)
 	if err != nil {
-		if os.IsNotExist(err) {
+		// os.IsNotExist does not see through the %w wrap; errors.Is does.
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 		// A file that exists but has no such node is the bootstrap case for save, and an
@@ -262,7 +265,7 @@ func (s SaveCmd) Run(c *CLI) error {
 			}
 			return fmt.Errorf("read surface %s: %w", s.Name, err)
 		}
-		config[s.Name] = redact(live)
+		config[s.Name] = redact(s.normalize(live))
 	}
 	if len(config) > 0 {
 		body["config"] = config
@@ -317,10 +320,11 @@ func (a ApplyCmd) Run(c *CLI) error {
 		desired := config[name]
 		var live any
 		if s.GetPath != "" {
-			live, err = cl.GetJSON(s.GetPath)
-			if err != nil {
-				return fmt.Errorf("read surface %s: %w", name, err)
+			raw, gerr := cl.GetJSON(s.GetPath)
+			if gerr != nil {
+				return fmt.Errorf("read surface %s: %w", name, gerr)
 			}
+			live = s.normalize(raw)
 		}
 		resolved, err := resolveSecrets(desired, live, lookupSecret, a.AllowLiteralSecrets)
 		if err != nil {
@@ -377,10 +381,11 @@ func (d DiffCmd) Run(c *CLI) error {
 		}
 		var live any
 		if s.GetPath != "" {
-			live, err = cl.GetJSON(s.GetPath)
-			if err != nil {
-				return fmt.Errorf("read surface %s: %w", name, err)
+			raw, gerr := cl.GetJSON(s.GetPath)
+			if gerr != nil {
+				return fmt.Errorf("read surface %s: %w", name, gerr)
 			}
+			live = s.normalize(raw)
 		}
 		resolved, err := resolveSecrets(config[name], live, lookupSecret, d.AllowLiteralSecrets)
 		if err != nil {
