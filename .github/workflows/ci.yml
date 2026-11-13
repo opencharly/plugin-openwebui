@@ -1,0 +1,42 @@
+# The Go gates for this plugin's own module (R7: tests that can fail).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: candy/plugin-openwebui/go.mod
+          cache-dependency-path: candy/plugin-openwebui/go.sum
+
+      - name: gofmt
+        working-directory: candy/plugin-openwebui
+        run: test -z "$(gofmt -l .)"
+
+      - name: go vet
+        working-directory: candy/plugin-openwebui
+        run: GOWORK=off go vet ./...
+
+      - name: build
+        working-directory: candy/plugin-openwebui
+        run: GOWORK=off go build ./...
+
+      - name: tests (the live-server probe skips without a deployment)
+        working-directory: candy/plugin-openwebui
+        run: GOWORK=off go test ./...

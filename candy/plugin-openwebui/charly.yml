@@ -1,0 +1,62 @@
+plugin-openwebui:
+    candy:
+        # The `description:` is a PUBLISHED surface, not decoration: `charly docs generate`
+        # renders one opencharly.ai page per plugin candy from this text, the `providers:`
+        # list and this candy's own `schema/*.cue`. An empty or placeholder description is a
+        # public-docs defect and an ADE gate miss at once.
+        description: |
+            The `charly openwebui` management CLI plus the CUE-validated `kind: openwebui`
+            configuration entity — save a deployed Open WebUI's configuration into a
+            project's `charly.yml`, and deploy it back through Open WebUI's own HTTP API.
+
+            **Two capabilities, one object.** `command:openwebui` is the CLI
+            (`status`, `save`, `apply`, `diff`, `export`); `kind:openwebui` is the flat
+            `<name>: {openwebui: …}` entity it reads and writes. The entity is validated at
+            load against this plugin's served `#OpenwebuiInput`, so a typo'd surface or a
+            missing required field is a `charly box validate` error, not a silent no-op.
+
+            **The field names are the server's own.** Each `config.<surface>` body is the
+            JSON body of that surface's POST endpoint (`POST /api/v1/configs/connections`,
+            `POST /openai/config/update`, …), so `save` is a GET→node copy and `apply` is a
+            node→POST copy with no translation table that could drift. `apply` posts each
+            surface's own typed endpoint — never the untyped bulk `POST
+            /api/v1/configs/import`, which skips every per-surface side effect (model-cache
+            invalidation, tool-server re-registration, MFA session revocation).
+
+            **Credentials never enter the file.** `save` replaces every credential-bearing
+            leaf with `{keep: true}` (the live value is preserved at apply time), so a
+            save→apply round-trip is a no-op and a committed entity carries no secret.
+            `apply` refuses a literal credential in the entity unless
+            `--allow-literal-secrets` is passed for a throwaway bed; an operator-authored
+            `{secret: <credential-key>}` is resolved from the environment instead.
+
+            The plugin owns the whole surface — the grammar, the HTTP client, the surface
+            table, the credential placeholders and the comment-preserving charly.yml write.
+            Placement is computed from `charly.yml`'s `compiled_plugins:`, never stated here.
+        plugin:
+            # EXTERNAL (out-of-tree): the default for a new plugin. charly connects it by
+            # word at runtime with zero charly-module changes.
+            source: github.com/opencharly/plugin-openwebui/candy/plugin-openwebui
+            providers:
+                - command:openwebui
+                - kind:openwebui
+        plan:
+            # ADE check: a build-context marker. The command's own surface speaks to a LIVE
+            # Open WebUI server, so exercising it end to end belongs to the R10 bed that
+            # composes this plugin, never to the candy's plan (the org's canonical form for
+            # a command plugin — plugin-strata/plugin-ollama/plugin-qdrant do the same).
+            - check: the plugin ships a buildable Go module (go.mod + provider + CLI + its own served CUE schema) the host can build
+              id: openwebui-plugin-module-present
+              context:
+                - build
+              command: "true"
+
+openwebui-cli-skill:
+    skill:
+        name: openwebui-cli
+        family: openwebui
+        owner: plugin-openwebui
+        triggers:
+            - 'the `charly openwebui` management CLI / the `command:openwebui` + `kind:openwebui` plugin / `candy/plugin-openwebui`'
+            - 'saving or deploying a deployed Open WebUI configuration (models, connections, tool servers, code execution, RAG) through its HTTP API'
+            - 'an `openwebui:` config entity in a project charly.yml'

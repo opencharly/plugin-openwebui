@@ -1,0 +1,6 @@
+# charly.yml backups written by `charly openwebui save/apply` (the plugin-migrate
+# precedent: a rewrite is always reversible without a git operation).
+.charly/
+# build/test debris
+*.test
+/plugins

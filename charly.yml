@@ -1,0 +1,14 @@
+# plugin-openwebui — the `charly openwebui` management CLI and the `kind: openwebui`
+# config entity.
+#
+# A plugin repo is a candy repo whose candy carries a `plugin:` block (umbrella
+# `AGENTS.md`, "Repo classes and naming"; the class is `plugin-`). This plugin is
+# EXTERNAL by default: projects compose it as
+# `@github.com/opencharly/plugin-openwebui/candy/plugin-openwebui:<tag>` and charly
+# connects it by word at runtime (host-builds ./cmd/serve, speaks go-plugin gRPC).
+# Nothing is compiled into the charly binary, so there is no `compiled_plugins:` entry
+# and no pin inside `charly/charly.yml`.
+repo: github.com/opencharly/plugin-openwebui
+discover:
+    - path: candy
+      recursive: true
