@@ -108,7 +108,7 @@
 // Integrations (ConnectionsConfigForm now carries only ENABLE_BASE_MODELS_CACHE), so the
 // two removed switches are no longer part of the server's form and must not be required.
 #Connections: close({
-	ENABLE_BASE_MODELS_CACHE!:   bool
+	ENABLE_BASE_MODELS_CACHE!: bool
 })
 
 // POST /api/v1/configs/models
