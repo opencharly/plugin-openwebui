@@ -89,7 +89,7 @@ func newFakeServer(t *testing.T) (*fakeServer, *httptest.Server) {
 // the surface has one, so redaction, validation and the round-trip all execute.
 func (f *fakeServer) seed() {
 	f.state["/api/v1/configs/connections"] = map[string]any{
-		"ENABLE_DIRECT_CONNECTIONS": true, "ENABLE_BASE_MODELS_CACHE": true}
+		"ENABLE_BASE_MODELS_CACHE": true}
 	f.state["/api/v1/configs/models"] = map[string]any{
 		"DEFAULT_MODELS": "qwen", "DEFAULT_PINNED_MODELS": nil, "MODEL_ORDER_LIST": []any{"qwen"}}
 	f.state["/openai/config"] = map[string]any{

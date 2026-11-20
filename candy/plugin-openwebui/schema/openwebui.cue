@@ -27,7 +27,7 @@
 // `POST /openai/config/update`, …), so `save` is a GET→node copy and `apply` is a
 // node→POST copy with NO translation table that could drift from the server. The one
 // deliberate exception is a credential leaf, which is a `#Secret` instead of a string
-// (see below). This is why the keys read `ENABLE_DIRECT_CONNECTIONS` rather than a
+// (see below). This is why the keys read `ENABLE_BASE_MODELS_CACHE` rather than a
 // friendlier re-spelling: a prettier name would need a mapping layer, and a mapping
 // layer is a second contract that drifts silently (R2/R3).
 //
@@ -104,10 +104,11 @@
 // ---------------------------------------------------------------------------
 
 // POST /api/v1/configs/connections
+// Modified by opencharly, 2026: Open WebUI 0.13.4 removed Direct Connections and Direct
+// Integrations (ConnectionsConfigForm now carries only ENABLE_BASE_MODELS_CACHE), so the
+// two removed switches are no longer part of the server's form and must not be required.
 #Connections: close({
-	ENABLE_DIRECT_CONNECTIONS!:  bool
-	ENABLE_DIRECT_INTEGRATIONS?: bool
-	ENABLE_BASE_MODELS_CACHE!:   bool
+	ENABLE_BASE_MODELS_CACHE!: bool
 })
 
 // POST /api/v1/configs/models

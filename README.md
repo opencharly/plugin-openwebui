@@ -29,7 +29,6 @@ openwebui-config:
             password_secret: charly/secret/WEBUI_ADMIN_PASSWORD
         config:
             connections:
-                ENABLE_DIRECT_CONNECTIONS: true
                 ENABLE_BASE_MODELS_CACHE: true
             models:
                 DEFAULT_MODELS: qwen3.8-flash-next
@@ -43,7 +42,7 @@ openwebui-config:
 ```
 
 `config.<surface>` is the JSON body of that surface's own POST endpoint, so the names are
-the server's (`ENABLE_DIRECT_CONNECTIONS`, not a friendlier re-spelling). One mapping layer
+the server's (`ENABLE_BASE_MODELS_CACHE`, not a friendlier re-spelling). One mapping layer
 between a pretty name and the wire name would be a second contract that drifts; there is
 none.
 
