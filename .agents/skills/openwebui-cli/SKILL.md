@@ -28,7 +28,7 @@ dumps the raw config table (a credential-bearing backup).
 ## The entity is the server's own wire shape
 
 Each `config.<surface>` body is the JSON body of that surface's POST endpoint. The field
-names are therefore the server's (`ENABLE_DIRECT_CONNECTIONS`, `OPENAI_API_KEYS`,
+names are therefore the server's (`ENABLE_BASE_MODELS_CACHE`, `OPENAI_API_KEYS`,
 `TOOL_SERVER_CONNECTIONS`) — never a friendlier re-spelling, because a mapping layer between
 a pretty name and the wire name is a second contract that drifts.
 

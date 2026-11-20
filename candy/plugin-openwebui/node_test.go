@@ -13,9 +13,8 @@ func TestSchemaRejectsTypo(t *testing.T) {
 	body := map[string]any{
 		"config": map[string]any{
 			"connections": map[string]any{
-				"ENABLE_DIRECT_CONNECTIONS": true,
-				"ENABLE_BASE_MODELS_CACHE":  false,
-				"BOGUS_FIELD":               true,
+				"ENABLE_BASE_MODELS_CACHE": false,
+				"BOGUS_FIELD":              true,
 			},
 		},
 	}
@@ -34,8 +33,7 @@ func TestSchemaAcceptsMinimal(t *testing.T) {
 	for name, body := range map[string]map[string]any{
 		"empty": {},
 		"typed": {"config": map[string]any{"connections": map[string]any{
-			"ENABLE_DIRECT_CONNECTIONS": true,
-			"ENABLE_BASE_MODELS_CACHE":  true,
+			"ENABLE_BASE_MODELS_CACHE": true,
 		}}},
 		"open-surface": {"config": map[string]any{"retrieval": map[string]any{"ANY_FUTURE_KEY": 1}}},
 		"secret-ref": {"config": map[string]any{"openai": map[string]any{
@@ -52,9 +50,7 @@ func TestSchemaAcceptsMinimal(t *testing.T) {
 
 // TestSchemaRejectsRequiredFieldGone proves required-field enforcement is real.
 func TestSchemaRejectsRequiredFieldGone(t *testing.T) {
-	body := map[string]any{"config": map[string]any{"connections": map[string]any{
-		"ENABLE_DIRECT_CONNECTIONS": true, // ENABLE_BASE_MODELS_CACHE missing
-	}}}
+	body := map[string]any{"config": map[string]any{"connections": map[string]any{}}}
 	if err := ValidateEntity(body); err == nil {
 		t.Fatal("schema accepted connections without its required field")
 	}
